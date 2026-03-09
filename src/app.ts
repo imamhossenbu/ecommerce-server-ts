@@ -24,6 +24,14 @@ app.use(express.urlencoded({ extended: true }));
 
 
 app.use('/api/v1', router);
+app.get('/', (req: Request, res: Response) => {
+  res.status(200).json({
+    success: true,
+    message: "Welcome to Seoul Mirage Server! 🚀",
+    status: "Operational"
+  });
+});
+
 app.use(globalErrorHandler);
 
 // Not Found Route
@@ -35,8 +43,6 @@ app.use((req: Request, res: Response) => {
 });
 
 // Testing Route
-app.get('/', (req: Request, res: Response) => {
-  res.send('Glowly Backend is Running! 🚀');
-});
+
 
 export default app;
