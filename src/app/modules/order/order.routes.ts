@@ -14,4 +14,6 @@ router.get('/my-orders', protect, orderControllers.getMyOrders);
 router.get('/all-orders', protect, isAdmin, orderControllers.getAllOrders);
 router.patch('/update-order-status/:id', protect, isAdmin, orderControllers.updateOrderStatus);
 
+router.get('/:tranId', protect, orderControllers.getOrderByTransactionId);
+
 export const orderRoutes = router;

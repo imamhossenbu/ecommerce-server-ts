@@ -10,7 +10,7 @@ const router = express.Router();
 router.get('/me', protect, userControllers.getLoggedUser);
 
 
-router.put('/update-profile', protect, upload.single('image'), userControllers.updateProfile);
+router.patch('/update-profile', protect, upload.single('image'), userControllers.updateProfile);
 
 
 router.post('/change-password', protect, userControllers.changePassword);

@@ -16,8 +16,14 @@ const findUserByResetToken = async (hashedToken: string) => {
   });
 };
 
+
+const findUserById = async (id: string) => {
+  return await User.findById(id);
+};
+
 export const AuthService = {
   findUserByEmail,
   createUserInDB,
   findUserByResetToken,
+  findUserById
 };

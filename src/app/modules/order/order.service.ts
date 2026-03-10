@@ -27,8 +27,8 @@ const getOrdersByEmail = async (email: string) => {
   return await Order.find({ "customerInfo.email": email }).sort({ createdAt: -1 });
 };
 
-const getOrderByIdFromDB = async (id: string) => {
-  return await Order.findById(id);
+const getOrderByIdFromDB = async (tranId: string) => {
+  return await Order.findOne({transactionId:tranId});
 };
 
 const getAllOrdersFromDB = async (query: any) => {

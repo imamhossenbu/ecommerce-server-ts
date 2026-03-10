@@ -136,3 +136,33 @@ export const resetPassword = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: "Error in server" });
   }
 };
+
+
+
+export const changePassword = async (req: Request, res: Response) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const userId = (req as any).user.id; 
+    console.log(userId)
+
+    const user = await AuthService.findUserById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword as string, user.password as string);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: "Old password is incorrect" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedNewPassword = await bcrypt.hash(newPassword, salt);
+
+    user.password = hashedNewPassword;
+    await user.save();
+
+    res.status(200).json({ success: true, message: "Password updated successfully" });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
