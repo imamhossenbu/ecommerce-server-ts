@@ -37,6 +37,8 @@ const getAllOrdersFromDB = async (query: any) => {
   const skip = (page - 1) * limit;
 
   let filter: any = {};
+  
+
   if (query.search) {
     const searchRegex = new RegExp(query.search as string, 'i');
     filter.$or = [
@@ -45,25 +47,37 @@ const getAllOrdersFromDB = async (query: any) => {
       { "customerInfo.email": searchRegex }
     ];
   }
+
   if (query.status) filter.paymentStatus = query.status;
   if (query.orderStatus) filter.orderStatus = query.orderStatus;
 
   const orders = await Order.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit);
   const totalOrders = await Order.countDocuments(filter);
 
-  // Stats Calculation using Aggregate
   const stats = await Order.aggregate([
     {
       $group: {
         _id: null,
-        totalRevenue: { $sum: { $cond: [{ $eq: ["$paymentStatus", "Paid"] }, "$totalAmount", 0] } },
+        totalRevenue: { 
+          $sum: { $cond: [{ $eq: ["$paymentStatus", "Paid"] }, "$totalAmount", 0] } 
+        },
         totalOrders: { $sum: 1 },
-        pendingOrders: { $sum: { $cond: [{ $eq: ["$paymentStatus", "Pending"] }, 1, 0] } }
+        pendingOrders: { 
+          $sum: { $cond: [{ $eq: ["$paymentStatus", "Pending"] }, 1, 0] } 
+        },
+        deliveredOrders: { 
+          $sum: { $cond: [{ $eq: ["$orderStatus", "Delivered"] }, 1, 0] } 
+        }
       }
     }
   ]);
 
-  const summary = stats.length > 0 ? stats[0] : { totalRevenue: 0, totalOrders: 0, pendingOrders: 0 };
+  const summary = stats.length > 0 ? stats[0] : { 
+    totalRevenue: 0, 
+    totalOrders: 0, 
+    pendingOrders: 0,
+    deliveredOrders: 0 
+  };
 
   return { orders, totalOrders, page, limit, summary };
 };
