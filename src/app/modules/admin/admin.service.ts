@@ -35,60 +35,65 @@ const getDashboardStatsFromDB = async () => {
 };
 
 const getManageCustomersFromDB = async (query: any) => {
-  const { page = 1, limit = 10, search = "", status = "" } = query;
+  const { page = 1, limit = 10, search = "", status = "", role = "" } = query;
   const skip = (Number(page) - 1) * Number(limit);
 
-  let filter: any = { role: "user" };
+  let filter: any = {};
+  
   if (search) {
     filter.$or = [
       { firstName: { $regex: search, $options: "i" } },
+      { lastName: { $regex: search, $options: "i" } },
       { email: { $regex: search, $options: "i" } }
     ];
   }
-  if (status) filter.status = status;
+  
 
-  const customers = await User.find(filter).select("-password").skip(skip).limit(Number(limit)).sort({ createdAt: -1 });
+  if (status) filter.status = status;
+  if (role) filter.role = role; 
+
+  const customers = await User.find(filter)
+    .select("-password")
+    .skip(skip)
+    .limit(Number(limit))
+    .sort({ createdAt: -1 });
 
   const customerData = await Promise.all(customers.map(async (user: any) => {
-    const stats = await Order.aggregate([
+    const orderStats = await Order.aggregate([
       { $match: { "customerInfo.email": user.email } },
       { $group: { 
           _id: null, 
           totalOrders: { $sum: 1 }, 
-          totalSpent: { $sum: "$totalAmount" },
-          lastActive: { $max: "$createdAt" }
+          totalSpent: { $sum: "$totalAmount" }
       }}
     ]);
 
     return {
       ...user.toObject(),
-      ordersCount: stats[0]?.totalOrders || 0,
-      totalSpent: stats[0]?.totalSpent || 0,
-      lastActive: stats[0]?.lastActive || user.createdAt
+      totalOrders: orderStats[0]?.totalOrders || 0,
+      totalSpent: orderStats[0]?.totalSpent || 0
     };
   }));
 
-
-  const totalCustomers = await User.countDocuments({ role: "user" });
-  const newCustomers = await User.countDocuments({ 
-    role: "user", 
-    createdAt: { $gte: new Date(Date.now() - 30*24*60*60*1000) } 
-  });
-  const inactiveCustomers = await User.countDocuments({ role: "user", status: "inactive" });
+  const totalMembers = await User.countDocuments(); 
+  const totalAdmins = await User.countDocuments({ role: "admin" });
+  const totalUsers = await User.countDocuments({ role: "user" });
   
-  const avgOrderValue = await Order.aggregate([
-    { $group: { _id: null, avg: { $avg: "$totalAmount" } } }
-  ]);
+  const inactiveCount = await User.countDocuments({ status: "inactive" });
 
   return {
     customerData,
-    totalCustomers,
+    totalCount: await User.countDocuments(filter), 
     limit: Number(limit),
     stats: {
-      totalCustomers,
-      newCustomers,
-      inactiveCustomers,
-      avgOrderValue: avgOrderValue[0]?.avg || 0
+      totalMembers,
+      totalAdmins,
+      totalUsers,
+      inactiveCount,
+      avgOrderValue: (await Order.aggregate([
+        { $match: { paymentStatus: "Paid" } },
+        { $group: { _id: null, avg: { $avg: "$totalAmount" } } }
+      ]))[0]?.avg || 0
     }
   };
 };

@@ -29,17 +29,24 @@ export const getManageCustomers = catchAsync(async (req: Request, res: Response)
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: 'Customers and stats fetched successfully!',
+    message: 'Members data and platform stats fetched successfully!',
     data: {
-      customers: result.customerData,
+      
+      customers: result.customerData, 
+      
       meta: {
-        totalCustomers: result.totalCustomers,
-        totalPages: Math.ceil(result.totalCustomers / result.limit),
+        totalCustomers: result.totalCount, 
+        totalPages: Math.ceil(result.totalCount / result.limit),
+        currentPage: Number(req.query.page) || 1,
+        limit: result.limit
       },
+
       stats: result.stats
     }
   });
 });
+
+
 export const deleteUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
