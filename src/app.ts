@@ -11,7 +11,8 @@ app.use(
   cors({
     origin: [
       'https://ecommerce-with-next-drab.vercel.app',
-      'http://localhost:3000'
+      'http://localhost:3000',
+      'https://ecommerce-with-ts.vercel.app'
     ],
     credentials: true, 
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
